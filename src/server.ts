@@ -1,29 +1,39 @@
-console.log("[1/4] Carregando bibliotecas Express e Cors...");
 import express from "express";
 import cors from "cors";
-
-console.log("[2/4] Carregando rotas da aplicacao...");
+import swaggerUi from "swagger-ui-express";
 import { profileRoutes } from "./routes/profile.routes";
 import { technologyRoutes } from "./routes/technology.routes";
 import { projectRoutes } from "./routes/project.routes";
+import { globalErrorHandler } from "./middlewares/error.middleware";
+import { swaggerSpec } from "./config/swagger";
 
-console.log("[3/4] Inicializando instancia do Express...");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Registro dos endpoints da especificacao
+// Rota da documentação interativa Swagger
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Rota raiz amigável
+app.get("/", (_req, res) => {
+  res.json({
+    name: "ReAlimenta API",
+    status: "online",
+    docs: "/api-docs",
+  });
+});
+
+// Endpoints da API
 app.use("/api/profiles", profileRoutes);
 app.use("/api/technologies", technologyRoutes);
 app.use("/api/projects", projectRoutes);
 
-const PORT = 3000;
+// Manipulador Global de Erros (deve ser o último middleware registrado)
+app.use(globalErrorHandler);
 
-console.log("[4/4] Abrindo porta " + PORT + "...");
-app.listen(PORT, () => {
-  console.log(`\n=================================================`);
-  console.log(`🚀 Servidor ReAlimenta rodando com sucesso!`);
-  console.log(`🔗 Teste no navegador: http://localhost:${PORT}/api/technologies`);
-  console.log(`=================================================\n`);
+const PORT = Number(process.env.PORT) || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`📖 Documentação Swagger em: http://localhost:${PORT}/api-docs`);
 });
